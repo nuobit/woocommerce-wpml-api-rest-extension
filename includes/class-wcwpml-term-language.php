@@ -53,18 +53,18 @@ class WCWPML_Term_Language {
         $table = $wpdb->prefix . 'icl_translations';
 
         // This is the exact JOIN we care about in *our* code.
-        $join = " INNER JOIN {$table} AS tr
-        ON tt.term_taxonomy_id = tr.element_id
-        AND tr.element_type = CONCAT('tax_', tt.taxonomy)";
+        $join = " INNER JOIN {$table} AS wpmltr
+        ON tt.term_taxonomy_id = wpmltr.element_id
+        AND wpmltr.element_type = CONCAT('tax_', tt.taxonomy)";
 
         // Has *our* exact join already been added?
         if ( strpos( $clauses['join'], $join ) === false ) {
             // 1) Add our join.
             $clauses['join'] .= $join;
 
-            // 2) Add our WHERE using alias `tr` (safe: we just added it).
+            // 2) Add our WHERE using alias `wpmltr` (safe: we just added it).
             $clauses['where'] .= $wpdb->prepare(
-                ' AND tr.language_code = %s',
+                ' AND wpmltr.language_code = %s',
                 $lang
             );
         }

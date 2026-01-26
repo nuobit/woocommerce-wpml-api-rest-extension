@@ -1,6 +1,6 @@
 # WooCommerce WPML REST API Extension – Term Language Fix
 
-**Version:** 1.0.3  
+**Version:** 1.0.4  
 **Author:** NuoBiT Solutions, S.L.  
 **Contributors:** Eric Antones <eantones@nuobit.com>  
 **License:** GPLv3 or later  
