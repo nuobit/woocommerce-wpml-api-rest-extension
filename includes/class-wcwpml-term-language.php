@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2025 NuoBiT Solutions - Eric Antones <eantones@nuobit.com>
+ * Copyright 2026 NuoBiT Solutions - Eric Antones <eantones@nuobit.com>
  * License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl)
  * 
  * @package WooCommerce_WPML_REST_API_Extension
@@ -30,41 +30,23 @@ class WCWPML_Term_Language {
     public static function filter_terms_clauses( $clauses, $taxonomies, $args ) {
         global $wpdb;
 
-        // Only if WPML is active.
-        if ( ! defined( 'ICL_SITEPRESS_VERSION' ) ) {
+        // Only if lang defined and not 'all'.
+        $lang = apply_filters( 'wpml_current_language', null );
+        if ( ! $lang || $lang === 'all' ) {
             return $clauses;
         }
 
-        // Detect if this get_terms() was called from wp_update_term().
-        $stack = debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS );
-        $in_wp_update_term = false;
-        foreach ( $stack as $frame ) {
-            if ( ! empty( $frame['function'] ) && $frame['function'] === 'wp_update_term' ) {
-                $in_wp_update_term = true;
-                break;
-            }
-        }
-        if ( ! $in_wp_update_term ) {
-            // Guaranteed: only wp_update_term calls pass through.
-            return $clauses;
-        }
-
-        // Only for WooCommerce attribute taxonomies (pa_*).
+        // Only for taxonomies: Categories (product_cat) and Attribute values (pa_*).
         $attribute_taxonomies = array_filter(
             (array) $taxonomies,
             static function ( $taxonomy ) {
-                // If you're not on PHP 8+, replace str_starts_with with strpos === 0.
-                return is_string( $taxonomy ) && 
-                    ($taxonomy == 'product_cat' || str_starts_with( $taxonomy, 'pa_'));
+                return is_string( $taxonomy ) && (
+                    $taxonomy === 'product_cat' || 
+                    strpos( $taxonomy, 'pa_' ) === 0
+                );
             }
         );
         if ( empty( $attribute_taxonomies ) ) {
-            return $clauses;
-        }
-
-        // Only if lang defined.
-        $lang = apply_filters( 'wpml_current_language', null );
-        if ( ! $lang ) {
             return $clauses;
         }
 

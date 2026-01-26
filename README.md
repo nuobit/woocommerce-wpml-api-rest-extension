@@ -1,33 +1,39 @@
 # WooCommerce WPML REST API Extension – Term Language Fix
 
-**Version:** 1.0.2  
+**Version:** 1.0.3  
 **Author:** NuoBiT Solutions, S.L.  
 **Contributors:** Eric Antones <eantones@nuobit.com>  
 **License:** GPLv3 or later  
 
 ## Description
 
-A small WooCommerce + WPML compatibility helper that ensures **WooCommerce term** lookups by slug are restricted to the **currently active WPML language** when WordPress updates a term.
+A small WooCommerce + WPML compatibility helper that ensures **WooCommerce term** lookups are restricted to the **currently active WPML language**.
 
-This avoids cases where `wp_update_term()` (or code paths that rely on it) may resolve the *wrong-language* term in multilingual stores.
+This fixes the issue where WPML doesn't take into account the language parameter in REST API queries for categories and attributes, causing term queries to return results from all languages instead of the requested language.
 
 ## What it does
 
 When WPML is active, this plugin:
 
 - Hooks into the `terms_clauses` filter.
-- Detects whether the current `get_terms()` call originates from `wp_update_term()` (via `debug_backtrace()`).
 - Applies the restriction for WooCommerce product categories (`product_cat`) and attribute taxonomies (`pa_*`).
 - Adds a JOIN to WPML's `icl_translations` table and filters by `tr.language_code = <current language>`.
+- Skips filtering when language is set to 'all'.
 
 ## Why it exists
 
-WooCommerce taxonomies (product categories and attributes like `pa_color`, `pa_size`, etc.) often use term slugs that can overlap across languages. During a term update, WordPress may query terms in a way that isn't language-aware. With WPML enabled, that can lead to:
+This plugin addresses a bug in WPML where the REST API language filtering is not properly implemented for WooCommerce taxonomies. WPML has focused primarily on backend and frontend functionality, but appears to have limited support for REST API operations.
+
+WooCommerce taxonomies (product categories and attributes like `pa_color`, `pa_size`, etc.) often use term slugs that can overlap across languages. When querying terms via the REST API, WPML doesn't properly filter by the language parameter, leading to:
 
 - Updating the wrong translation of an attribute term
 - Conflicting term resolutions when slugs match across languages
+- Incorrect term associations in multilingual contexts
+- API responses mixing terms from different languages
 
-This helper forces the lookup to stay within the active WPML language for those specific update scenarios.
+This helper forces term lookups to stay within the active WPML language for WooCommerce taxonomies, fixing what WPML should be handling natively.
+
+**Note:** This is a workaround for WPML's API limitations. Ideally, WPML will address this in future updates, making this plugin unnecessary.
 
 ## Requirements
 
