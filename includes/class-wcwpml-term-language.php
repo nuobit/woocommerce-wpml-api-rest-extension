@@ -54,7 +54,8 @@ class WCWPML_Term_Language {
             (array) $taxonomies,
             static function ( $taxonomy ) {
                 // If you're not on PHP 8+, replace str_starts_with with strpos === 0.
-                return is_string( $taxonomy ) && str_starts_with( $taxonomy, 'pa_' );
+                return is_string( $taxonomy ) && 
+                    ($taxonomy == 'product_cat' || str_starts_with( $taxonomy, 'pa_'));
             }
         );
         if ( empty( $attribute_taxonomies ) ) {

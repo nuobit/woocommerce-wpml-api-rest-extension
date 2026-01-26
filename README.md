@@ -1,12 +1,13 @@
 # WooCommerce WPML REST API Extension – Term Language Fix
 
-**Version:** 1.0.1  
+**Version:** 1.0.2  
 **Author:** NuoBiT Solutions, S.L.  
+**Contributors:** Eric Antones <eantones@nuobit.com>  
 **License:** GPLv3 or later  
 
 ## Description
 
-A small WooCommerce + WPML compatibility helper that ensures **WooCommerce attribute term** lookups by slug are restricted to the **currently active WPML language** when WordPress updates a term.
+A small WooCommerce + WPML compatibility helper that ensures **WooCommerce term** lookups by slug are restricted to the **currently active WPML language** when WordPress updates a term.
 
 This avoids cases where `wp_update_term()` (or code paths that rely on it) may resolve the *wrong-language* term in multilingual stores.
 
@@ -16,12 +17,12 @@ When WPML is active, this plugin:
 
 - Hooks into the `terms_clauses` filter.
 - Detects whether the current `get_terms()` call originates from `wp_update_term()` (via `debug_backtrace()`).
-- Applies the restriction **only** for WooCommerce attribute taxonomies (`pa_*`).
-- Adds a JOIN to WPML’s `icl_translations` table and filters by `tr.language_code = <current language>`.
+- Applies the restriction for WooCommerce product categories (`product_cat`) and attribute taxonomies (`pa_*`).
+- Adds a JOIN to WPML's `icl_translations` table and filters by `tr.language_code = <current language>`.
 
 ## Why it exists
 
-WooCommerce attribute taxonomies (`pa_color`, `pa_size`, etc.) often use term slugs that can overlap across languages. During a term update, WordPress may query terms in a way that isn’t language-aware. With WPML enabled, that can lead to:
+WooCommerce taxonomies (product categories and attributes like `pa_color`, `pa_size`, etc.) often use term slugs that can overlap across languages. During a term update, WordPress may query terms in a way that isn't language-aware. With WPML enabled, that can lead to:
 
 - Updating the wrong translation of an attribute term
 - Conflicting term resolutions when slugs match across languages
