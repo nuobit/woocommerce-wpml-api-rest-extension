@@ -19,7 +19,11 @@ class WCWPML_Term_Language {
     }
 
     /**
-     * Restrict slug lookups to the active language when our flag is present.
+     * Restrict term queries to the active WPML language during REST API requests.
+     *
+     * Only applies to translatable WooCommerce taxonomies (product_cat, pa_*).
+     * Non-translatable taxonomies are skipped to avoid INNER JOIN on missing
+     * icl_translations rows which would silently drop all terms.
      *
      * @param array $clauses    SQL clauses for terms query.
      * @param array $taxonomies Taxonomies in query.
@@ -30,23 +34,31 @@ class WCWPML_Term_Language {
     public static function filter_terms_clauses( $clauses, $taxonomies, $args ) {
         global $wpdb;
 
+        // Only apply during REST API requests.
+        if ( ! defined( 'REST_REQUEST' ) || ! REST_REQUEST ) {
+            return $clauses;
+        }
+
         // Only if lang defined and not 'all'.
         $lang = apply_filters( 'wpml_current_language', null );
         if ( ! $lang || $lang === 'all' ) {
             return $clauses;
         }
 
-        // Only for taxonomies: Categories (product_cat) and Attribute values (pa_*).
-        $attribute_taxonomies = array_filter(
+        // Only for taxonomies that are both relevant (product_cat, pa_*) AND
+        // actually registered as translatable in WPML. If a taxonomy is not
+        // translatable, its terms have no rows in icl_translations and an
+        // INNER JOIN would silently drop every term.
+        $translatable_taxonomies = array_filter(
             (array) $taxonomies,
             static function ( $taxonomy ) {
                 return is_string( $taxonomy ) && (
                     $taxonomy === 'product_cat' || 
                     strpos( $taxonomy, 'pa_' ) === 0
-                );
+                ) && apply_filters( 'wpml_is_translated_taxonomy', false, $taxonomy );
             }
         );
-        if ( empty( $attribute_taxonomies ) ) {
+        if ( empty( $translatable_taxonomies ) ) {
             return $clauses;
         }
 

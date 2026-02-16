@@ -1,8 +1,8 @@
 # WooCommerce WPML REST API Extension – Term Language Fix
 
-**Version:** 1.0.4  
+**Version:** 1.0.5  
 **Author:** NuoBiT Solutions, S.L.  
-**Contributors:** Eric Antones <eantones@nuobit.com>  
+**Contributors:** Eric Antones \<<eantones@nuobit.com>\>  
 **License:** GPLv3 or later  
 
 ## Description
@@ -15,10 +15,25 @@ This fixes the issue where WPML doesn't take into account the language parameter
 
 When WPML is active, this plugin:
 
-- Hooks into the `terms_clauses` filter.
-- Applies the restriction for WooCommerce product categories (`product_cat`) and attribute taxonomies (`pa_*`).
-- Adds a JOIN to WPML's `icl_translations` table and filters by `tr.language_code = <current language>`.
+- Hooks into the `terms_clauses` filter **only during REST API requests** (`REST_REQUEST`).
+- Applies the restriction only for WooCommerce product categories (`product_cat`) and attribute taxonomies (`pa_*`) that are **registered as translatable** in WPML.
+- Adds a JOIN to WPML's `icl_translations` table and filters by `wpmltr.language_code = <current language>`.
 - Skips filtering when language is set to 'all'.
+
+## Changelog
+
+### 1.0.5
+
+- **Bugfix:** Added `REST_REQUEST` guard to prevent the `terms_clauses` filter from running on frontend and admin pages. The filter was causing attribute dropdown selectors to disappear on product variation pages.
+- **Bugfix:** Added `wpml_is_translated_taxonomy` check to skip non-translatable taxonomies. When a `pa_*` taxonomy is not set as translatable in WPML, its terms have no rows in `icl_translations`. The `INNER JOIN` then silently drops all terms, producing empty dropdowns.
+
+### 1.0.4
+
+- Updated plugin description and metadata.
+
+### 1.0.3
+
+- Initial release.
 
 ## Why it exists
 
