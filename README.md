@@ -3,7 +3,7 @@
 **Version:** 1.0.6\
 **Author:** NuoBiT Solutions, S.L.  
 **Contributors:** Eric Antones \<<eantones@nuobit.com>\>  
-**License:** GPLv3 or later  
+**License:** [GPL-3.0-or-later](LICENSE)
 
 ## Description
 
@@ -27,6 +27,7 @@ When WPML is active, this plugin:
 - Preserve product types and other unrelated terms in mixed REST taxonomy queries, allowing native WooCommerce variable-parent synchronization after variation saves.
 - Keep language restrictions on translated categories and attributes without adding an outer-query join.
 - Add [integration regression checks](tests/README.md) for query scope and product-type cache priming.
+- Align license notices with GPL-3.0-or-later and include the license text.
 
 ### 1.0.5
 

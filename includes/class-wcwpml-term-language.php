@@ -1,7 +1,7 @@
 <?php
 /**
  * Copyright 2026 NuoBiT Solutions - Eric Antones <eantones@nuobit.com>
- * License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl)
+ * License GPL-3.0-or-later (https://www.gnu.org/licenses/gpl-3.0.html)
  * 
  * @package WooCommerce_WPML_REST_API_Extension
  */
