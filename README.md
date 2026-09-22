@@ -1,6 +1,6 @@
 # WooCommerce WPML REST API Extension – Term Language Fix
 
-**Version:** 1.0.5  
+**Version:** 1.0.6\
 **Author:** NuoBiT Solutions, S.L.  
 **Contributors:** Eric Antones \<<eantones@nuobit.com>\>  
 **License:** GPLv3 or later  
@@ -17,10 +17,16 @@ When WPML is active, this plugin:
 
 - Hooks into the `terms_clauses` filter **only during REST API requests** (`REST_REQUEST`).
 - Applies the restriction only for WooCommerce product categories (`product_cat`) and attribute taxonomies (`pa_*`) that are **registered as translatable** in WPML.
-- Adds a JOIN to WPML's `icl_translations` table and filters by `wpmltr.language_code = <current language>`.
+- Restricts translated taxonomy rows to the active language with an `EXISTS` condition, preserving unrelated rows in mixed queries.
 - Skips filtering when language is set to 'all'.
 
 ## Changelog
+
+### 1.0.6
+
+- Preserve product types and other unrelated terms in mixed REST taxonomy queries, allowing native WooCommerce variable-parent synchronization after variation saves.
+- Keep language restrictions on translated categories and attributes without adding an outer-query join.
+- Add [integration regression checks](tests/README.md) for query scope and product-type cache priming.
 
 ### 1.0.5
 

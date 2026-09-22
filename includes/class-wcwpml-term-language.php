@@ -22,8 +22,8 @@ class WCWPML_Term_Language {
      * Restrict term queries to the active WPML language during REST API requests.
      *
      * Only applies to translatable WooCommerce taxonomies (product_cat, pa_*).
-     * Non-translatable taxonomies are skipped to avoid INNER JOIN on missing
-     * icl_translations rows which would silently drop all terms.
+     * Rows from other taxonomies remain available in mixed queries, including
+     * the product_type terms WooCommerce needs to identify variable products.
      *
      * @param array $clauses    SQL clauses for terms query.
      * @param array $taxonomies Taxonomies in query.
@@ -46,9 +46,7 @@ class WCWPML_Term_Language {
         }
 
         // Only for taxonomies that are both relevant (product_cat, pa_*) AND
-        // actually registered as translatable in WPML. If a taxonomy is not
-        // translatable, its terms have no rows in icl_translations and an
-        // INNER JOIN would silently drop every term.
+        // actually registered as translatable in WPML.
         $translatable_taxonomies = array_filter(
             (array) $taxonomies,
             static function ( $taxonomy ) {
@@ -64,21 +62,22 @@ class WCWPML_Term_Language {
 
         $table = $wpdb->prefix . 'icl_translations';
 
-        // This is the exact JOIN we care about in *our* code.
-        $join = " INNER JOIN {$table} AS wpmltr
-        ON tt.term_taxonomy_id = wpmltr.element_id
-        AND wpmltr.element_type = CONCAT('tax_', tt.taxonomy)";
+        $placeholders = implode( ', ', array_fill( 0, count( $translatable_taxonomies ), '%s' ) );
 
-        // Has *our* exact join already been added?
-        if ( strpos( $clauses['join'], $join ) === false ) {
-            // 1) Add our join.
-            $clauses['join'] .= $join;
+        // WordPress primes product relationships with a mixed taxonomy query.
+        // Filter only translated rows; EXISTS also preserves row cardinality.
+        $condition = $wpdb->prepare(
+            " AND (tt.taxonomy NOT IN ({$placeholders}) OR EXISTS (
+                SELECT 1 FROM {$table} AS wcwpml_translation
+                WHERE wcwpml_translation.element_id = tt.term_taxonomy_id
+                  AND wcwpml_translation.element_type = CONCAT('tax_', tt.taxonomy)
+                  AND wcwpml_translation.language_code = %s
+            ))",
+            array_merge( array_values( $translatable_taxonomies ), [ $lang ] )
+        );
 
-            // 2) Add our WHERE using alias `wpmltr` (safe: we just added it).
-            $clauses['where'] .= $wpdb->prepare(
-                ' AND wpmltr.language_code = %s',
-                $lang
-            );
+        if ( strpos( $clauses['where'], $condition ) === false ) {
+            $clauses['where'] .= $condition;
         }
 
         return $clauses;
