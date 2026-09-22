@@ -7,7 +7,7 @@
  * Author: NuoBiT Solutions, S.L.
  * Author URI: https://www.nuobit.com/
  * Contributors: Eric Antones <eantones@nuobit.com>
- * License: GPLv3 or later
+ * License: GPL-3.0-or-later
  * Text Domain: woocommerce-wpml-api-rest-extension
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  */

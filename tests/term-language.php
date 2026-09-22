@@ -1,7 +1,7 @@
 <?php
 /**
  * Copyright 2026 NuoBiT Solutions - Eric Antones <eantones@nuobit.com>
- * License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl)
+ * License GPL-3.0-or-later (https://www.gnu.org/licenses/gpl-3.0.html)
  *
  * Read-only integration regression; run with wp eval-file (see tests/README.md).
  */
