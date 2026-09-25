@@ -1,6 +1,6 @@
 # WooCommerce WPML REST API Extension – Term Language Fix
 
-**Version:** 1.0.6\
+**Version:** 1.0.7\
 **Author:** NuoBiT Solutions, S.L.  
 **Contributors:** Eric Antones \<<eantones@nuobit.com>\>  
 **License:** [GPL-3.0-or-later](LICENSE)
@@ -19,8 +19,14 @@ When WPML is active, this plugin:
 - Applies the restriction only for WooCommerce product categories (`product_cat`) and attribute taxonomies (`pa_*`) that are **registered as translatable** in WPML.
 - Restricts translated taxonomy rows to the active language with an `EXISTS` condition, preserving unrelated rows in mixed queries.
 - Skips filtering when language is set to 'all'.
+- Steps aside while WooCommerce Multilingual (WCML) suspends WPML's own `terms_clauses` filter around its cross-language operations (translation sync, term counts, attribute lookup table), so those internal lookups resolve the term ids of every language, as WCML intends.
 
 ## Changelog
+
+### 1.0.7
+
+- **Bugfix:** Step aside while WCML suspends WPML's `terms_clauses` filter. During a REST product save, WCML's translation sync looks up the translated category and attribute ids of every language with WPML's filter unhooked; the plugin kept restricting those lookups to the request language, so the ids of the other languages were not found and WooCommerce assigned the default category to the translations instead.
+- Extend the [integration regression checks](tests/README.md) with a suspended pass in every mode.
 
 ### 1.0.6
 
@@ -62,6 +68,7 @@ This helper forces term lookups to stay within the active WPML language for WooC
 - WordPress
 - WooCommerce (for `pa_*` attribute taxonomies)
 - WPML (the filter is a no-op unless WPML is active)
+- WooCommerce Multilingual (optional: the filter steps aside while WCML suspends WPML's term filters)
 
 ## Installation
 

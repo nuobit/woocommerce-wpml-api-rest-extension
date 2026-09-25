@@ -1,10 +1,10 @@
 # Term-language integration regression
 
-Run against a local WordPress installation with WooCommerce, WPML and this
-plugin active. Use synthetic variable products translated into each test
-language, a translated product category and a translated global attribute.
-Assign the corresponding terms to every translated parent. Persistent object
-caching must be disabled for this read-only checker.
+Run against a local WordPress installation with WooCommerce, WPML, WooCommerce
+Multilingual and this plugin active. Use synthetic variable products translated
+into each test language, a translated product category and a translated global
+attribute. Assign the corresponding terms to every translated parent.
+Persistent object caching must be disabled for this read-only checker.
 
 Supply a local JSON manifest. Keep real installation details and fixture IDs
 outside the repository; the following values are illustrative:
@@ -44,9 +44,16 @@ Exit status is nonzero when an assertion fails. The JSON result lists failed
 assertion names without database contents. Query-contract checks execute the
 plugin's actual filter against real term rows; input-language and translation
 flags are temporarily controlled in that process to cover its no-op branches.
-The final checks prime relationships through WordPress's normal mixed query and
-assert that WooCommerce still constructs a variable product. No database rows
-are changed and only process-local object cache entries are cleared.
+Every language also runs a suspended pass in every mode: WPML's own
+`terms_clauses` callback is unhooked and re-hooked the way WooCommerce
+Multilingual suspends it around its cross-language operations; the plugin must
+return the clauses unchanged while it is unhooked, and the normal expectations
+must hold again once it is restored. The checker refuses to run unless that
+callback is hooked at its normal priority. The final checks prime relationships
+through WordPress's normal mixed query and assert that WooCommerce still
+constructs a variable product. No database rows are changed and only
+process-local object cache entries and hook registrations are touched, and the
+latter are restored.
 
 These checks complement real HTTP product/variation writes and storefront
 sorting assertions. They do not replace an end-to-end connector verification.
