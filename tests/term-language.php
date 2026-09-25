@@ -35,6 +35,13 @@ $callback = [ 'WCWPML_Term_Language', 'filter_terms_clauses' ];
 if ( ! is_callable( $callback ) || has_filter( 'terms_clauses', $callback ) === false ) {
     throw new RuntimeException( 'The plugin must be active.' );
 }
+// WooCommerce Multilingual suspends WPML's own term language filter around its
+// cross-language operations by unhooking this callback at its priority 10.
+global $sitepress;
+if ( ! isset( $sitepress ) || has_filter( 'terms_clauses', [ $sitepress, 'terms_clauses' ] ) !== 10 ) {
+    throw new RuntimeException( "WPML's terms_clauses filter must be hooked at priority 10." );
+}
+$wpml_callback = [ $sitepress, 'terms_clauses' ];
 
 $checks = [];
 $check = static function ( $name, $actual, $expected ) use ( &$checks ) {
@@ -93,6 +100,25 @@ $query = static function ( $taxonomies, $empty = false, $outer_alias = false ) u
         'unchanged' => $filtered === $clauses,
     ];
 };
+$cases_for = static function ( $categories, $attributes ) use ( $attribute, $type_ids ) {
+    return [
+        'category' => [ [ 'product_cat' ], $categories ],
+        'attribute' => [ [ $attribute ], $attributes ],
+        'translated' => [ [ 'product_cat', $attribute ], array_merge( $categories, $attributes ) ],
+        'type' => [ [ 'product_type' ], $type_ids ],
+        'mixed' => [ [ 'product_cat', $attribute, 'product_type' ], array_merge( $categories, $attributes, $type_ids ) ],
+    ];
+};
+$run_cases = static function ( $prefix, $cases, $expect_no_op ) use ( $query, $check, $ids ) {
+    foreach ( $cases as $name => $case ) {
+        $result = $query( $case[0] );
+        $check( "{$prefix}:{$name}:terms", $result['ids'], $ids( $case[1] ) );
+        $check( "{$prefix}:{$name}:idempotence", $result['idempotent'], true );
+        if ( $expect_no_op ) {
+            $check( "{$prefix}:{$name}:no-op", $result['unchanged'], true );
+        }
+    }
+};
 
 foreach ( $fixture['variable_products'] as $language => $product_id ) {
     do_action( 'wpml_switch_language', $language );
@@ -103,21 +129,20 @@ foreach ( $fixture['variable_products'] as $language => $product_id ) {
         $terms = $fixture['terms'][$language];
         $categories = $mode === 'rest' ? $terms['product_cat'] : $all_categories;
         $attributes = $mode === 'rest' ? $terms[$attribute] : $all_attributes;
-        $cases = [
-            'category' => [ [ 'product_cat' ], $categories ],
-            'attribute' => [ [ $attribute ], $attributes ],
-            'translated' => [ [ 'product_cat', $attribute ], array_merge( $categories, $attributes ) ],
-            'type' => [ [ 'product_type' ], $type_ids ],
-            'mixed' => [ [ 'product_cat', $attribute, 'product_type' ], array_merge( $categories, $attributes, $type_ids ) ],
-        ];
-        foreach ( $cases as $name => $case ) {
-            $result = $query( $case[0] );
-            $check( "{$language}:{$name}:terms", $result['ids'], $ids( $case[1] ) );
-            $check( "{$language}:{$name}:idempotence", $result['idempotent'], true );
-            if ( $mode !== 'rest' ) {
-                $check( "{$language}:{$name}:no-op", $result['unchanged'], true );
-            }
+        $cases = $cases_for( $categories, $attributes );
+        $run_cases( $language, $cases, $mode !== 'rest' );
+
+        // While WCML keeps WPML's filter unhooked, the plugin steps aside in
+        // every mode: the terms of every language resolve, the clauses are
+        // untouched. Once the filter is back, the normal expectations hold again.
+        remove_filter( 'terms_clauses', $wpml_callback, 10 );
+        try {
+            $run_cases( "{$language}:suspended", $cases_for( $all_categories, $all_attributes ), true );
+        } finally {
+            add_filter( 'terms_clauses', $wpml_callback, 10, 3 );
         }
+        $run_cases( "{$language}:resumed", $cases, $mode !== 'rest' );
+
         $check( "{$language}:empty", $query( [ 'product_cat', 'product_type' ], true )['ids'], [] );
         $check( "{$language}:outer-alias", $query( [ 'product_cat', 'product_type' ], false, true )['ids'], $ids( array_merge( $categories, $type_ids ) ) );
 

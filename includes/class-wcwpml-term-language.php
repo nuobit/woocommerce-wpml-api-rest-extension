@@ -45,6 +45,15 @@ class WCWPML_Term_Language {
             return $clauses;
         }
 
+        // WPML's own language filter is SitePress::terms_clauses. WooCommerce
+        // Multilingual unhooks it around its cross-language operations
+        // (translation sync, term counts, attribute lookup table) and re-hooks
+        // it afterwards; this filter steps aside exactly then.
+        global $sitepress;
+        if ( ! isset( $sitepress ) || false === has_filter( 'terms_clauses', [ $sitepress, 'terms_clauses' ] ) ) {
+            return $clauses;
+        }
+
         // Only for taxonomies that are both relevant (product_cat, pa_*) AND
         // actually registered as translatable in WPML.
         $translatable_taxonomies = array_filter(
